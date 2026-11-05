@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Fitora — Gym Tracker</title>
+<meta name="description" content="Track workouts, personal records and training stats, synced to the cloud." />
+<meta name="theme-color" content="#0d0d0f" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋️</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">🏋️</div>
+    <h1 class="auth-title">Fitora</h1>
+    <p class="auth-sub">Your training log, synced to the cloud</p>
+
+    <div id="auth-error" class="auth-error" hidden></div>
+
+    <form id="auth-form">
+      <label class="field-label">Email</label>
+      <input id="auth-email" class="input" type="email" autocomplete="email" placeholder="you@example.com" required />
+
+      <label class="field-label">Password</label>
+      <input id="auth-password" class="input" type="password" autocomplete="current-password" placeholder="••••••••" minlength="6" required />
+
+      <button id="auth-submit" type="submit" class="btn btn-accent auth-submit">Sign In</button>
+    </form>
+
+    <button id="auth-toggle-mode" type="button" class="link-btn">Need an account? Sign up</button>
+    <button id="auth-forgot" type="button" class="link-btn muted">Forgot password?</button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <button id="auth-guest" type="button" class="btn btn-ghost auth-submit">Continue as Guest (this device only)</button>
+
+    <p class="auth-footnote">Not configured yet? Open <code>js/firebase-config.js</code> and paste your Firebase project keys.</p>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="app" hidden>
+
+  <!-- Fixed left sidebar (desktop) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo" title="Fitora">🏋️<span class="sidebar-logo-mark">F</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-bottom">
+      <button id="logout-btn" class="sidebar-item logout-item" title="Sign Out">
+        <span class="nav-icon" id="logout-icon"></span>
+        <span class="nav-lbl">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="app-body">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-search">
+          <span class="topbar-search-icon" id="search-icon"></span>
+          <input id="global-search" type="text" placeholder="Search recent workouts…" autocomplete="off" />
+        </div>
+        <div class="topbar-right">
+          <button id="notif-btn" class="icon-btn" title="Notifications"><span id="bell-icon"></span></button>
+          <button id="quick-add-btn" class="icon-btn icon-btn-accent" title="Log a workout"><span id="plus-icon"></span></button>
+          <div class="user-chip">
+            <span id="user-avatar" class="user-avatar">?</span>
+            <span id="user-email" class="user-email"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main" id="main-content"></main>
+
+    <!-- Bottom tab bar (mobile) -->
+    <nav class="tabs-mobile" id="tabs-mobile"></nav>
+  </div>
+</div>
+
+<!-- Stopwatch trigger -->
+<button id="stopwatch-trigger" class="stopwatch-trigger" title="Stopwatch">⏱</button>
+
+<!-- ============ STOPWATCH MODAL ============ -->
+<div id="stopwatch-overlay" class="sw-overlay" hidden>
+  <div class="sw-sheet">
+    <div class="sw-handle"></div>
+    <div id="sw-time" class="sw-time">00:00.0</div>
+    <div id="sw-laps" class="sw-laps"></div>
+    <div class="sw-btns" id="sw-btns"></div>
+    <button id="sw-close" class="link-btn">Close</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
