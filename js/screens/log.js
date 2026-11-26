@@ -2,7 +2,7 @@ import { DB } from '../db.js';
 import { MUSCLES, localDateStr, uid, escapeHtml, toast } from '../utils.js';
 
 function makeSet(prev) {
-  return { weight: prev?.weight || '', reps: prev?.reps || '', pr: false, notes: '' };
+  return { weight: prev?.weight || '', reps: prev?.reps || '', pr: false, notes: '' }; // note is never copied
 }
 function makeExercise() {
   return { id: uid(), name: '', muscle: 'Chest', sets: [makeSet()] };
@@ -65,6 +65,8 @@ export function render(container) {
 
     <div id="ex-list"></div>
 
+    <div id="muscle-totals"></div>
+
     <div class="actions">
       <button id="add-ex" class="btn btn-ghost">+ Exercise</button>
       <button id="save-log" class="btn btn-accent">💾 Save</button>
@@ -94,15 +96,37 @@ export function render(container) {
   renderExercises(container.querySelector('#ex-list'));
 }
 
+// Sets per muscle group for the workout currently being logged.
+function renderMuscleTotals() {
+  const el = document.getElementById('muscle-totals');
+  if (!el) return;
+  const totals = {};
+  exercises.forEach(ex => {
+    if (!ex.name.trim()) return;
+    totals[ex.muscle] = (totals[ex.muscle] || 0) + ex.sets.length;
+  });
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) { el.innerHTML = ''; return; }
+  const all = entries.reduce((a, [, n]) => a + n, 0);
+  el.innerHTML = `
+    <div class="card totals-card">
+      <div class="card-title">Sets by muscle <span class="totals-all">${all} total</span></div>
+      <div class="totals-chips">
+        ${entries.map(([m, n]) => `<span class="total-chip"><b>${escapeHtml(m)}</b> ${n}</span>`).join('')}
+      </div>
+    </div>`;
+}
+
 function renderExercises(listEl) {
   listEl.innerHTML = exercises.map(ex => exerciseHtml(ex)).join('');
+  renderMuscleTotals();
 
   exercises.forEach(ex => {
     const block = listEl.querySelector(`[data-ex="${ex.id}"]`);
     if (!block) return;
 
     const nameInput = block.querySelector('.ex-name');
-    nameInput.addEventListener('input', e => { ex.name = e.target.value; });
+    nameInput.addEventListener('input', e => { ex.name = e.target.value; renderMuscleTotals(); });
     // When a known machine/exercise is picked, fill in its muscle group.
     nameInput.addEventListener('change', e => {
       ex.name = e.target.value;
@@ -137,6 +161,8 @@ function renderExercises(listEl) {
       if (!row) return;
       row.querySelector('.set-weight').addEventListener('input', e => { s.weight = e.target.value; });
       row.querySelector('.set-reps').addEventListener('input', e => { s.reps = e.target.value; });
+      const noteEl = block.querySelector(`[data-note="${si}"]`);
+      if (noteEl) noteEl.addEventListener('input', e => { s.notes = e.target.value; });
       row.querySelector('.pr-toggle').addEventListener('click', () => {
         s.pr = !s.pr;
         renderExercises(listEl);
@@ -172,6 +198,7 @@ function openPicker(onPick) {
       <div class="sw-handle"></div>
       <div class="pick-title">Machines &amp; Exercises</div>
       <input class="input pick-search" type="search" placeholder="Search…" autocomplete="off" />
+      <div class="pick-filters"></div>
       <div class="pick-list"></div>
       <button type="button" class="link-btn pick-close">Close</button>
     </div>`;
@@ -179,12 +206,30 @@ function openPicker(onPick) {
   document.body.classList.add('no-scroll');
 
   const listEl = overlay.querySelector('.pick-list');
+  const filtersEl = overlay.querySelector('.pick-filters');
   const search = overlay.querySelector('.pick-search');
+  let activeMuscle = 'All';
+  // Only offer muscle groups the user actually has exercises for.
+  const usedMuscles = MUSCLES.filter(m => known.some(k => k.muscle === m));
+  const filterNames = ['All', ...usedMuscles];
   const close = () => { overlay.remove(); document.body.classList.remove('no-scroll'); };
+
+  function drawFilters() {
+    filtersEl.innerHTML = filterNames.map(m => {
+      const n = m === 'All' ? known.length : known.filter(k => k.muscle === m).length;
+      return `<button type="button" class="pick-chip ${activeMuscle === m ? 'active' : ''}" data-m="${escapeHtml(m)}">${escapeHtml(m)} <span>${n}</span></button>`;
+    }).join('');
+    filtersEl.querySelectorAll('.pick-chip').forEach(b => b.addEventListener('click', () => {
+      activeMuscle = b.dataset.m;
+      drawFilters();
+      draw();
+    }));
+  }
 
   function draw() {
     const q = search.value.trim().toLowerCase();
-    const items = known.filter(k => k.name.toLowerCase().includes(q));
+    const items = known.filter(k =>
+      (activeMuscle === 'All' || k.muscle === activeMuscle) && k.name.toLowerCase().includes(q));
     listEl.innerHTML = items.length
       ? items.map((k, i) => `<button type="button" class="pick-item" data-i="${i}"><span>${escapeHtml(k.name)}</span><span class="badge">${escapeHtml(k.muscle || '')}</span></button>`).join('')
       : `<div class="pick-empty">${known.length ? 'No match.' : 'Nothing saved yet — add machines on the PRs tab, or just type a name.'}</div>`;
@@ -195,6 +240,7 @@ function openPicker(onPick) {
   search.addEventListener('input', draw);
   overlay.querySelector('.pick-close').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  drawFilters();
   draw();
 }
 
@@ -221,6 +267,7 @@ function exerciseHtml(ex) {
           <button type="button" class="pr-toggle ${s.pr ? 'active' : ''}">PR ★</button>
           ${ex.sets.length > 1 ? `<button type="button" class="del-set">×</button>` : ''}
         </div>
+        <input class="set-note" data-note="${si}" placeholder="Note for set ${si + 1} (optional)" value="${escapeHtml(s.notes || '')}" autocomplete="off" />
       `).join('')}
       <div class="ex-footer">
         <button type="button" class="add-set-btn">+ Add Set</button>

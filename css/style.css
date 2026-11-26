@@ -494,3 +494,23 @@ code{background:var(--bg4); padding:1px 5px; border-radius:4px; font-family:var(
   .actions { flex-wrap: wrap; }
   .actions .btn { flex: 1 1 30%; min-height: 46px; }
 }
+
+/* ===== Set notes, muscle totals, picker filter ===== */
+.set-note{
+  width:100%; margin:0 0 6px 26px; max-width:calc(100% - 26px); box-sizing:border-box;
+  background:transparent; border:none; border-bottom:1px dashed var(--border2); color:var(--muted);
+  padding:4px 2px; font-size:12px; font-family:var(--sans);
+}
+.set-note:focus{outline:none; border-bottom-color:var(--accent); color:var(--text);}
+.totals-card{margin-bottom:16px;}
+.totals-all{float:right; font-size:11px; color:var(--muted); font-weight:600;}
+.totals-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.total-chip{background:var(--accent-soft); border:1px solid rgba(124,77,255,.3); color:var(--accent2); border-radius:14px; padding:4px 10px; font-size:11px;}
+.total-chip b{font-weight:700; margin-right:4px;}
+.set-notes{margin:6px 0 0; padding-left:16px; font-size:11px; color:var(--muted);}
+.set-notes b{color:var(--text); font-weight:600;}
+.pick-filters{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; flex:none; -webkit-overflow-scrolling:touch;}
+.pick-chip{flex:none; white-space:nowrap; padding:7px 12px; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer;
+  background:var(--bg4); border:1px solid var(--border2); color:var(--muted);}
+.pick-chip span{opacity:.7; margin-left:3px; font-size:10px;}
+.pick-chip.active{background:var(--accent-soft); border-color:var(--accent); color:var(--accent2);}

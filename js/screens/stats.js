@@ -30,6 +30,10 @@ export function render(container) {
   sessions.forEach(s => s.exercises.forEach(e => { if (e.muscle) muscleCounts[e.muscle] = (muscleCounts[e.muscle] || 0) + 1; }));
   const topMuscles = Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
+  const muscleSets = {};
+  sessions.forEach(s => s.exercises.forEach(e => { const m = e.muscle || 'Other'; muscleSets[m] = (muscleSets[m] || 0) + e.sets.length; }));
+  const setEntries = Object.entries(muscleSets).sort((a, b) => b[1] - a[1]);
+
   const prMachines = machines.filter(m => m.weight > 0).sort((a, b) => b.weight - a.weight);
 
   container.innerHTML = `
@@ -72,6 +76,18 @@ export function render(container) {
         `).join('')}
       </div>
     ` : ''}
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Total Sets by Muscle</div>
+      <div class="card-sub">all sessions</div>
+      ${setEntries.map(([m, n]) => `
+        <div class="muscle-row">
+          <span class="badge">${escapeHtml(m)}</span>
+          <div class="muscle-bar"><div class="muscle-bar-fill" style="width:${Math.round((n / setEntries[0][1]) * 100)}%;"></div></div>
+          <span class="muscle-count">${n}</span>
+        </div>
+      `).join('')}
+    </div>
 
     ${prMachines.length ? `
       <div class="card" style="margin-bottom:16px;">

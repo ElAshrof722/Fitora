@@ -50,6 +50,14 @@ export function render(container) {
   });
 }
 
+function muscleTotalsHtml(session) {
+  const totals = {};
+  session.exercises.forEach(e => { const m = e.muscle || 'Other'; totals[m] = (totals[m] || 0) + e.sets.length; });
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return '';
+  return `<div class="totals-chips" style="margin-bottom:12px;">${entries.map(([m, n]) => `<span class="total-chip"><b>${escapeHtml(m)}</b> ${n} sets</span>`).join('')}</div>`;
+}
+
 function sessionHtml(session, i) {
   const key = session.id || i;
   const open = openIds.has(key);
@@ -72,6 +80,7 @@ function sessionHtml(session, i) {
       </div>
       ${open ? `
         <div class="session-body">
+          ${muscleTotalsHtml(session)}
           ${session.notes ? `<div class="session-notes">"${escapeHtml(session.notes)}"</div>` : ''}
           ${session.exercises.map(ex => `
             <div class="ex-row">
@@ -84,6 +93,10 @@ function sessionHtml(session, i) {
                   <div class="pill ${s.pr ? 'pr' : ''}">Set ${si + 1}: ${s.weight ? `${escapeHtml(s.weight)}kg` : '—'} × ${escapeHtml(s.reps) || '—'}${s.pr ? ' ★' : ''}</div>
                 `).join('')}
               </div>
+              ${ex.sets.some(s => s.notes) ? `
+                <ul class="set-notes">
+                  ${ex.sets.map((s, si) => s.notes ? `<li><b>Set ${si + 1}:</b> ${escapeHtml(s.notes)}</li>` : '').join('')}
+                </ul>` : ''}
             </div>
           `).join('')}
         </div>
