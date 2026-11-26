@@ -1,6 +1,7 @@
 import { DB, auth } from '../db.js';
 import { escapeHtml, localDateStr, toast } from '../utils.js';
 import { Icon } from '../icons.js';
+import { showDate } from './history.js';
 
 const GOAL_KEY = 'il_weekly_goal';
 
@@ -91,7 +92,12 @@ function lineChart(points) {
     return `<line x1="${padX}" y1="${y}" x2="${w - padX}" y2="${y}" stroke="var(--border)" stroke-width="1" />`;
   }).join('');
 
-  const dots = coords.map(c => `<circle class="chart-pt" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2"><title>${escapeHtml(c.label)}: ${fmtVol(c.value)} kg</title></circle>`).join('');
+  // Each point has a visible dot plus a larger invisible hit area so it is easy to tap.
+  const dots = coords.map(c => `
+    <g class="chart-hit" data-date="${escapeHtml(c.date || '')}" data-has="${c.has ? 1 : 0}" role="button" tabindex="0" aria-label="${escapeHtml(c.label)}: ${c.has ? 'open workout' : 'no workout'}">
+      <circle class="chart-hit-area" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="16" />
+      <circle class="chart-pt ${c.has ? 'has' : ''}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${c.has ? 4.2 : 3}"><title>${escapeHtml(c.label)}: ${fmtVol(c.value)} kg${c.has ? ' — click to open' : ''}</title></circle>
+    </g>`).join('');
 
   const labelEvery = Math.ceil(coords.length / 6);
   const labels = coords.filter((_, i) => i % labelEvery === 0 || i === coords.length - 1)
@@ -156,7 +162,7 @@ export function render(container) {
     const d = new Date(); d.setDate(d.getDate() - idx);
     const ds = localDateStr(d);
     const vol = sessions.filter(s => s.date === ds).reduce((a, s) => a + sessionVolume(s), 0);
-    return { label: `${d.getMonth() + 1}/${d.getDate()}`, value: vol };
+    return { label: `${d.getMonth() + 1}/${d.getDate()}`, value: vol, date: ds, has: sessions.some(s => s.date === ds) };
   });
 
   const todaySession = sessions.find(s => s.date === localDateStr());
@@ -195,7 +201,7 @@ export function render(container) {
     <div class="dash-row">
       <div class="card chart-card">
         <div class="card-title">Activity</div>
-        <div class="card-sub">Training volume — last 14 days</div>
+        <div class="card-sub">Training volume — last 14 days · click a point to open that day</div>
         <div class="chart-wrap">${lineChart(last14)}</div>
       </div>
 
@@ -293,6 +299,15 @@ export function render(container) {
 
   container.querySelectorAll('[data-go]').forEach(btn => {
     btn.addEventListener('click', () => { location.hash = btn.dataset.go; });
+  });
+  container.querySelectorAll('.chart-hit').forEach(g => {
+    const go = () => {
+      if (g.dataset.has !== '1') { toast('No workout on this day'); return; }
+      showDate(g.dataset.date);
+      location.hash = 'history';
+    };
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
   const seeHistory = container.querySelector('#see-history');
   if (seeHistory) seeHistory.addEventListener('click', () => { location.hash = 'history'; });

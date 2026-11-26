@@ -514,3 +514,16 @@ code{background:var(--bg4); padding:1px 5px; border-radius:4px; font-family:var(
   background:var(--bg4); border:1px solid var(--border2); color:var(--muted);}
 .pick-chip span{opacity:.7; margin-left:3px; font-size:10px;}
 .pick-chip.active{background:var(--accent-soft); border-color:var(--accent); color:var(--accent2);}
+
+/* ===== Sets-by-muscle range switch + clickable activity points ===== */
+.seg{display:flex; gap:4px; background:var(--bg4); border:1px solid var(--border2); border-radius:10px; padding:3px; margin:10px 0;}
+.seg-btn{flex:1; background:none; border:none; color:var(--muted); font-size:12px; font-weight:700; padding:8px 0; border-radius:8px; cursor:pointer;}
+.seg-btn.active{background:var(--accent); color:#fff;}
+.sets-select{width:100%; margin-bottom:12px; font-size:14px;}
+.chart-hit{cursor:pointer; outline:none;}
+.chart-hit-area{fill:transparent;}
+.chart-pt{opacity:.55;}
+.chart-pt.has{opacity:1; fill:#fff; stroke:var(--accent);}
+.chart-hit:hover .chart-pt, .chart-hit:focus .chart-pt{opacity:1; fill:#fff; stroke:var(--accent2); stroke-width:3;}
+.day-banner{margin-bottom:14px;}
+.day-banner-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;}
