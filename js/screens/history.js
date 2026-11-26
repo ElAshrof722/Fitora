@@ -2,6 +2,16 @@ import { DB } from '../db.js';
 import { escapeHtml } from '../utils.js';
 
 let openIds = new Set();
+let dateFilter = null; // when set (YYYY-MM-DD), History shows only that day
+
+// Called by the dashboard graph: jump to one training day, sessions expanded.
+export function showDate(dateStr) {
+  dateFilter = dateStr;
+  openIds = new Set();
+  DB.getSessions().forEach((s, i) => { if (s.date === dateStr) openIds.add(s.id || i); });
+}
+// Leaving the History tab drops the day filter so the tab opens normally next time.
+window.addEventListener('hashchange', () => { if (location.hash !== '#history') dateFilter = null; });
 
 function formatDate(d) {
   if (!d) return '—';
@@ -27,13 +37,18 @@ export function render(container) {
   container.innerHTML = `
     <h1 class="page-title">History</h1>
     <p class="page-sub">All past sessions — tap to expand</p>
+    ${dateFilter ? dayBannerHtml(sessions) : ''}
     <div id="session-list"></div>
   `;
 
-  const list = container.querySelector('#session-list');
-  list.innerHTML = sessions.map((s, i) => sessionHtml(s, i)).join('');
+  const visible = sessions.map((s, i) => ({ s, i })).filter(({ s }) => !dateFilter || s.date === dateFilter);
+  const clearBtn = container.querySelector('#clear-day');
+  if (clearBtn) clearBtn.addEventListener('click', () => { dateFilter = null; render(container); });
 
-  sessions.forEach((s, i) => {
+  const list = container.querySelector('#session-list');
+  list.innerHTML = visible.map(({ s, i }) => sessionHtml(s, i)).join('');
+
+  visible.forEach(({ s, i }) => {
     const key = s.id || i;
     const card = list.querySelector(`[data-session="${key}"]`);
     if (!card) return;
@@ -48,6 +63,21 @@ export function render(container) {
       render(container);
     });
   });
+}
+
+function dayBannerHtml(sessions) {
+  const day = sessions.filter(s => s.date === dateFilter);
+  const merged = { exercises: day.flatMap(s => s.exercises) };
+  const sets = merged.exercises.reduce((a, e) => a + e.sets.length, 0);
+  return `
+    <div class="card day-banner">
+      <div class="day-banner-top">
+        <div><div class="card-title" style="margin:0;">${escapeHtml(formatDate(dateFilter))}</div>
+        <div class="card-sub" style="margin:2px 0 0;">${day.length} session${day.length === 1 ? '' : 's'} · ${merged.exercises.length} exercises · ${sets} sets</div></div>
+        <button type="button" id="clear-day" class="btn btn-ghost btn-sm">Show all</button>
+      </div>
+      ${muscleTotalsHtml(merged)}
+    </div>`;
 }
 
 function muscleTotalsHtml(session) {
